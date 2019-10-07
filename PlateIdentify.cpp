@@ -65,9 +65,9 @@ int main(int argc, char** argv)
 	convertScaleAbs(grad_x, abs_grad_x);
 	imshow("X方向梯度", abs_grad_x);
 	//测试Y方向梯度
-
-
-
+	//Sobel(mat_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
+	//convertScaleAbs(grad_y, abs_grad_y);
+	//imshow("Y方向梯度", abs_grad_y);
 
 
 	//NOTE:仅做水平方向求导，而不做垂直方向求导。这样做的意义是，如果我们做了垂直方向求导，会检测出很多水平边缘。
@@ -75,7 +75,18 @@ int main(int argc, char** argv)
 	addWeighted(abs_grad_x, SOBEL_X_WEIGHT, 0, 0, 0, grad);
 	imshow("整体方向Sobel", grad);
 
-
+	//TODO:为后续的形态学算子Morph等准备二值化的图像。
+	/*
+	CV_THRESH_OTSU:自适应阈值
+	CV_THRESH_BINARY:正二值化:像素的值越接近0，越可能被赋值为0，反之则为1
+	CV_THRESH_BINARY_INV:反二值化
+	正二值化处理蓝牌，反二值化处理黄牌
+	蓝牌字符浅，背景深，黄牌则是字符深，背景浅
+	*/
+	Mat mat_threshold;
+	double otsu_thresh_val =
+		threshold(grad, mat_threshold, 0, 255, CV_THRESH_OTSU + CV_THRESH_BINARY);
+	imshow("二值化结果", mat_threshold);
 
 
 
