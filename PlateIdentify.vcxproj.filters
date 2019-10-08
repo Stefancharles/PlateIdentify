@@ -18,5 +18,13 @@
     <ClCompile Include="PlateIdentify.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="plate_locate.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="plate_locate.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

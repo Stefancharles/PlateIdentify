@@ -96,6 +96,7 @@ int main(int argc, char** argv)
 		CV_RETR_EXTERNAL,
 		CV_CHAIN_APPROX_NONE);  // all pixels of each contours
 
+	
 	/*int index = 0;
 	for (; index >= 0; index = hierarchy[index][0])
 	{
@@ -111,7 +112,25 @@ int main(int argc, char** argv)
 
 	imshow("轮廓图", mat_threshold);*/
 
+	Rect rec_adapt;//矩形区域
+	for (size_t i = 0; i < contours.size(); i++)
+	{
+		//----矩形区域非零像素占总的比例，防止有较大的空白区域干扰检测结果
+		//----矩形的长宽限制，也可以再增加额外条件：长宽比例等
+		//countNonZero 可以得到非零像素点的个数。
+		//boundingRect 计算轮廓的最小外接矩形
 
+		int true_pix_count = countNonZero(mat_threshold(boundingRect(contours[i])));
+		double true_pix_rate = static_cast<double>(true_pix_count) / static_cast<double>(boundingRect(contours[i]).area());
+		if (boundingRect(contours[i]).height > 10 && boundingRect(contours[i]).width > 80 && true_pix_rate > 0.7)
+		{
+			rec_adapt = boundingRect(contours[i]);
+			drawContours(mat_threshold, contours, static_cast<int>(i), Scalar(200, 200, 0), 2);
+		}
+	}
+	imshow("morph1", mat_threshold);
+
+	imshow("Area Brand", srcImage(rec_adapt));
 
 
 

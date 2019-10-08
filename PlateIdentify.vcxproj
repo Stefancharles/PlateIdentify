@@ -155,6 +155,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="PlateIdentify.cpp" />
+    <ClCompile Include="plate_locate.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="plate_locate.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
