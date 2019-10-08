@@ -1,14 +1,5 @@
-﻿#include <opencv2/opencv.hpp>
-#include <opencv2/imgproc/types_c.h>
-#include "iostream"
+﻿#include"plate_locate.h"
 
-using namespace cv;
-using namespace std;
-
-static const int SOBEL_SCALE = 1;
-static const int SOBEL_DELTA = 0;
-static const int SOBEL_DDEPTH = CV_16S;
-static const int SOBEL_X_WEIGHT = 1;
 
 int main(int argc, char** argv)
 {
@@ -75,18 +66,53 @@ int main(int argc, char** argv)
 	addWeighted(abs_grad_x, SOBEL_X_WEIGHT, 0, 0, 0, grad);
 	imshow("整体方向Sobel", grad);
 
-	//TODO:为后续的形态学算子Morph等准备二值化的图像。
+	//TODO:二值化：为后续的形态学算子Morph等准备二值化的图像。
 	/*
-	CV_THRESH_OTSU:自适应阈值
-	CV_THRESH_BINARY:正二值化:像素的值越接近0，越可能被赋值为0，反之则为1
-	CV_THRESH_BINARY_INV:反二值化
-	正二值化处理蓝牌，反二值化处理黄牌
-	蓝牌字符浅，背景深，黄牌则是字符深，背景浅
+	* CV_THRESH_OTSU:自适应阈值
+	* CV_THRESH_BINARY:正二值化:像素的值越接近0，越可能被赋值为0，反之则为1
+	* CV_THRESH_BINARY_INV:反二值化
+	* 正二值化处理蓝牌，反二值化处理黄牌
+	* 蓝牌字符浅，背景深，黄牌则是字符深，背景浅
+	* 对图像的每个像素做一个阈值处理
+	* 与灰度图像仔细区分下，二值化图像中的白色是没有颜色强与暗的区别
 	*/
 	Mat mat_threshold;
 	double otsu_thresh_val =
 		threshold(grad, mat_threshold, 0, 255, CV_THRESH_OTSU + CV_THRESH_BINARY);
 	imshow("二值化结果", mat_threshold);
+
+
+	//TODO：闭操作：将车牌字母连接成为一个连通域，便于取轮廓。　
+	Mat element = getStructuringElement(MORPH_RECT, Size(morphW, morphH));
+	morphologyEx(mat_threshold, mat_threshold, MORPH_CLOSE, element);
+	imshow("闭操作结果", mat_threshold);
+
+	//TODO：取轮廓：将连通域的外围勾画出来，便于形成外接矩形。　
+	vector<vector<Point>> contours;
+	vector<Vec4i> hierarchy;
+	findContours(mat_threshold,
+		contours,               // a vector of contours
+		hierarchy,
+		CV_RETR_EXTERNAL,
+		CV_CHAIN_APPROX_NONE);  // all pixels of each contours
+
+	/*int index = 0;
+	for (; index >= 0; index = hierarchy[index][0])
+	{
+		Scalar color(rand() & 255, rand() & 255, rand() & 255);
+		drawContours(mat_threshold,
+			contours,
+			index,
+			color,
+			FILLED,
+			8,
+			hierarchy);
+	}
+
+	imshow("轮廓图", mat_threshold);*/
+
+
+
 
 
 
