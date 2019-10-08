@@ -22,8 +22,9 @@ int main(int argc, char** argv)
 	//TODO:GaussianBlur:对图像去噪，为边缘检测算法做准备。
 
 	//NOTE:高斯模糊，再进行灰度化。基于色彩的高斯模糊过程比灰度后的高斯模糊过程更容易检测到边缘点。
-	Mat mat_blur;
+	Mat mat_blur,mat_copy;
 	mat_blur = srcImage.clone();
+	mat_copy = srcImage.clone();
 	GaussianBlur(srcImage, mat_blur, Size(5, 5), 0, 0, BORDER_DEFAULT);
 	imshow("GaussianBlur", mat_blur);
 
@@ -96,21 +97,22 @@ int main(int argc, char** argv)
 		CV_RETR_EXTERNAL,
 		CV_CHAIN_APPROX_NONE);  // all pixels of each contours
 
-	
-	/*int index = 0;
+	//TODO:绘制取轮廓后的结果
+	/*
+	int index = 0;
 	for (; index >= 0; index = hierarchy[index][0])
 	{
 		Scalar color(rand() & 255, rand() & 255, rand() & 255);
-		drawContours(mat_threshold,
+		drawContours(mat_copy,
 			contours,
 			index,
 			color,
-			FILLED,
+			2,
 			8,
 			hierarchy);
 	}
 
-	imshow("轮廓图", mat_threshold);*/
+	imshow("轮廓图", mat_copy);*/
 
 	Rect rec_adapt;//矩形区域
 	for (size_t i = 0; i < contours.size(); i++)
@@ -125,12 +127,14 @@ int main(int argc, char** argv)
 		if (boundingRect(contours[i]).height > 10 && boundingRect(contours[i]).width > 80 && true_pix_rate > 0.7)
 		{
 			rec_adapt = boundingRect(contours[i]);
+			drawContours(mat_copy, contours, static_cast<int>(i), Scalar(0, 0, 255), 1);
 			drawContours(mat_threshold, contours, static_cast<int>(i), Scalar(200, 200, 0), 2);
 		}
 	}
-	imshow("morph1", mat_threshold);
+	imshow("轮廓图", mat_copy);
 
-	imshow("Area Brand", srcImage(rec_adapt));
+	//TODO：在原图中把车牌区域显示出来
+	imshow("车牌区域", srcImage(rec_adapt));
 
 
 
