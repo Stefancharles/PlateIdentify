@@ -286,7 +286,9 @@ int ColorPlateLocate()
 {
 	cout << "ColorPlateLocate,Start..." << endl;
 
-	Mat srcImage = imread("colortest.jpg");
+	Mat srcImage = imread("car1.jpg");
+	//srcImage.resize(960);
+
 	Mat mat_copy;
 	mat_copy = srcImage.clone();
 	if (srcImage.data == NULL)
@@ -349,7 +351,7 @@ int ColorPlateLocate()
 
 		int true_pix_count = countNonZero(src_threshold(boundingRect(contours[i])));
 		double true_pix_rate = static_cast<double>(true_pix_count) / static_cast<double>(boundingRect(contours[i]).area());
-		if (boundingRect(contours[i]).height > 10 && boundingRect(contours[i]).width > 80 && true_pix_rate > 0.7)
+		if (boundingRect(contours[i]).height > 10 && boundingRect(contours[i]).width > 80 && true_pix_rate > 0.5)
 		{
 			rec_adapt = boundingRect(contours[i]);
 			drawContours(mat_copy, contours, static_cast<int>(i), Scalar(0, 0, 255), 1);
@@ -360,7 +362,7 @@ int ColorPlateLocate()
 	Mat mat_plate;
 	mat_plate = srcImage(rec_adapt);
 	imshow("车牌", mat_plate);
-	imwrite("plate_color_test.jpg", mat_plate);
+	imwrite("car1_plate.jpg", mat_plate);
 	waitKey(0);
 }
 

@@ -19,7 +19,7 @@ static const int SOBEL_X_WEIGHT = 1;
 static const int SOBEL_morphW = 17;
 static const int SOBEL_morphH = 3;
 
-static const int color_morphW = 18;
+static const int color_morphW = 17;
 static const int color_morphH = 3;
 
 static const int DEFAULT_VERIFY_MIN = 1;   // 3
