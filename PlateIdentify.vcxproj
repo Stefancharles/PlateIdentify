@@ -154,7 +154,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="PlateIdentify.cpp" />
+    <ClCompile Include="PlateIdentify_main.cpp" />
     <ClCompile Include="plate_locate.cpp" />
   </ItemGroup>
   <ItemGroup>

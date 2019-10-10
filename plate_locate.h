@@ -8,12 +8,20 @@
 using namespace cv;
 using namespace std;
 
+
+enum Color { BLUE, YELLOW, WHITE, UNKNOWN };
+
 static const int SOBEL_SCALE = 1;
 static const int SOBEL_DELTA = 0;
 static const int SOBEL_DDEPTH = CV_16S;
 static const int SOBEL_X_WEIGHT = 1;
-static const int morphW = 17;
-static const int morphH = 3;
+
+static const int SOBEL_morphW = 17;
+static const int SOBEL_morphH = 3;
+
+static const int color_morphW = 18;
+static const int color_morphH = 3;
+
 static const int DEFAULT_VERIFY_MIN = 1;   // 3
 static const int DEFAULT_VERIFY_MAX = 24;  // 20
 static const int DEFAULT_ANGLE = 60;  // 30

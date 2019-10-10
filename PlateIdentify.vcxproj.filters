@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PlateIdentify.cpp">
+    <ClCompile Include="plate_locate.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="plate_locate.cpp">
+    <ClCompile Include="PlateIdentify_main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
