@@ -21,7 +21,7 @@ static const int SOBEL_morphH = 3;
 
 static const int color_morphW = 17;
 static const int color_morphH = 3;
-
+static const double AFFINE = -0.15;
 static const int DEFAULT_VERIFY_MIN = 1;   // 3
 static const int DEFAULT_VERIFY_MAX = 24;  // 20
 static const int DEFAULT_ANGLE = 60;  // 30
@@ -35,7 +35,6 @@ static const int TYPE = CV_8UC3;
 static const int WIDTH = 136;
 static const int HEIGHT = 36;
 
-void fillBlank(const RotatedRect& roi_rect, const Mat& src, Rect_<float>& safeBoundRect);
 
 class CPlate {
 public:

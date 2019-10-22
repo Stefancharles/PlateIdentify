@@ -1,157 +1,121 @@
 ﻿#include"plate_locate.h"
 
-
-
-int SobelPlateLocate(String pic_name)
+bool CacuSlope(const Mat& in, const double angle, double& slope)
 {
-	cout << "SobelPlateLocate,Start..." << endl;
+	int nRows = in.rows;
+	int nCols = in.cols;
 
-	Mat srcImage = imread(pic_name);
+	assert(in.channels() == 1);
 
-	if (srcImage.data == NULL)
-	{
-		return -1;
-		cout << "can't open image..." << endl;
-	}
-	else
-	{
-		cout << "input_image rows is " << srcImage.rows << endl;
-		cout << "input_image cols is " << srcImage.cols << endl;
-		imshow("Source Image", srcImage);
-	}
+	int comp_index[3];
+	int len[3];
 
-	//TODO:GaussianBlur:对图像去噪，为边缘检测算法做准备。
+	comp_index[0] = nRows / 4;
+	comp_index[1] = nRows / 4 * 2;
+	comp_index[2] = nRows / 4 * 3;
 
-	//NOTE:高斯模糊，再进行灰度化。基于色彩的高斯模糊过程比灰度后的高斯模糊过程更容易检测到边缘点。
-	Mat mat_blur, mat_copy;
-	mat_blur = srcImage.clone();
-	mat_copy = srcImage.clone();
-	GaussianBlur(srcImage, mat_blur, Size(5, 5), 0, 0, BORDER_DEFAULT);
-	imshow("GaussianBlur", mat_blur);
+	const uchar* p;
 
+	for (int i = 0; i < 3; i++) {
+		int index = comp_index[i];
+		p = in.ptr<uchar>(index);
 
-	//TODO:Gray:为边缘检测算法准备灰度化环境。
+		int j = 0;
+		int value = 0;
+		while (0 == value && j < nCols) value = int(p[j++]);
 
-	//NOTE:很多图像处理算法仅仅只适用于灰度图像，例如Sobel算子。
-	Mat mat_gray;
-	if (mat_blur.channels() == 3)
-		cvtColor(mat_blur, mat_gray, CV_RGB2GRAY);
-	else
-		mat_gray = mat_blur;
-	imshow("Gray", mat_gray);
-
-
-	//TODO:Sobel算子:检测图像中的垂直边缘，便于区分车牌。
-
-	//NOTE:通过Sobel算子，将车牌中的字符与车的背景明显区分开来，为后面的二值化与闭操作打下基础.
-
-	int scale = SOBEL_SCALE;
-	int delta = SOBEL_DELTA;
-	int ddepth = SOBEL_DDEPTH;
-
-	//创建grad_x和grad_y矩阵
-	Mat grad_x, grad_y;
-	Mat abs_grad_x, abs_grad_y;
-	//求X方向梯度
-	Sobel(mat_gray, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
-	convertScaleAbs(grad_x, abs_grad_x);
-	imshow("X方向梯度", abs_grad_x);
-	//测试Y方向梯度
-	//Sobel(mat_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
-	//convertScaleAbs(grad_y, abs_grad_y);
-	//imshow("Y方向梯度", abs_grad_y);
-
-
-	//NOTE:仅做水平方向求导，而不做垂直方向求导。这样做的意义是，如果我们做了垂直方向求导，会检测出很多水平边缘。
-	Mat grad;
-	addWeighted(abs_grad_x, SOBEL_X_WEIGHT, 0, 0, 0, grad);
-	imshow("整体方向Sobel", grad);
-
-	//TODO:二值化：为后续的形态学算子Morph等准备二值化的图像。
-	/*
-	* CV_THRESH_OTSU:自适应阈值
-	* CV_THRESH_BINARY:正二值化:像素的值越接近0，越可能被赋值为0，反之则为1
-	* CV_THRESH_BINARY_INV:反二值化
-	* 正二值化处理蓝牌，反二值化处理黄牌
-	* 蓝牌字符浅，背景深，黄牌则是字符深，背景浅
-	* 对图像的每个像素做一个阈值处理
-	* 与灰度图像仔细区分下，二值化图像中的白色是没有颜色强与暗的区别
-	*/
-	Mat mat_threshold;
-	double otsu_thresh_val =
-		threshold(grad, mat_threshold, 0, 255, CV_THRESH_OTSU + CV_THRESH_BINARY);
-	imshow("二值化结果", mat_threshold);
-
-
-	//TODO：闭操作：将车牌字母连接成为一个连通域，便于取轮廓。　
-	Mat element = getStructuringElement(MORPH_RECT, Size(SOBEL_morphW, SOBEL_morphH));
-	morphologyEx(mat_threshold, mat_threshold, MORPH_CLOSE, element);
-	imshow("闭操作结果", mat_threshold);
-
-	//TODO：取轮廓：将连通域的外围勾画出来，便于形成外接矩形。　
-	vector<vector<Point>> contours;
-	vector<Vec4i> hierarchy;
-	findContours(mat_threshold,
-		contours,               // a vector of contours
-		hierarchy,
-		CV_RETR_EXTERNAL,
-		CV_CHAIN_APPROX_NONE);  // all pixels of each contours
-
-	//TODO:绘制取轮廓后的结果
-	
-	int index = 0;
-	for (; index >= 0; index = hierarchy[index][0])
-	{
-		Scalar color(rand() & 255, rand() & 255, rand() & 255);
-		drawContours(mat_copy,
-			contours,
-			index,
-			color,
-			2,
-			8,
-			hierarchy);
+		len[i] = j;
 	}
 
-	imshow("轮廓图", mat_copy);
-	cout <<"num"<< index;
-	Rect rec_adapt;//矩形区域
-	cout << "Total contours is :" << contours.size() << endl;
-	for (size_t i = 0; i < contours.size(); i++)
-	{
-		//----矩形区域非零像素占总的比例，防止有较大的空白区域干扰检测结果
-		//----矩形的长宽限制，也可以再增加额外条件：长宽比例等
-		//countNonZero 可以得到非零像素点的个数。
-		//boundingRect 计算轮廓的最小外接矩形
+	 cout << "len[0]:" << len[0] << endl;
+	 cout << "len[1]:" << len[1] << endl;
+	 cout << "len[2]:" << len[2] << endl;
 
-		int true_pix_count = countNonZero(mat_threshold(boundingRect(contours[i])));
-		double true_pix_rate = static_cast<double>(true_pix_count) / static_cast<double>(boundingRect(contours[i]).area());
-		if (boundingRect(contours[i]).height > 10 && boundingRect(contours[i]).width > 80 && true_pix_rate > 0.7)
-		{
-			rec_adapt = boundingRect(contours[i]);
-			drawContours(mat_copy, contours, static_cast<int>(i), Scalar(0, 0, 255), 1);
-			drawContours(mat_threshold, contours, static_cast<int>(i), Scalar(200, 200, 0), 2);
-		}
-		/*else
-		{
-			cout << "Can not BoundingRec." << endl;
-			
-		}*/
+	// len[0]/len[1]/len[2] are used to calc the slope
+
+	double maxlen = max(len[2], len[0]);
+	double minlen = min(len[2], len[0]);
+	double difflen = abs(len[2] - len[0]);
+
+	double PI = 3.14159265;
+
+	double g = tan(angle * PI / 180.0);
+
+	if (maxlen - len[1] > nCols / 32 || len[1] - minlen > nCols / 32) {
+
+		double slope_can_1 =
+			double(len[2] - len[0]) / double(comp_index[1]);
+		double slope_can_2 = double(len[1] - len[0]) / double(comp_index[0]);
+		double slope_can_3 = double(len[2] - len[1]) / double(comp_index[0]);
+		 cout<<"angle:"<<angle<<endl;
+		 cout<<"g:"<<g<<endl;
+		 cout << "slope_can_1:" << slope_can_1 << endl;
+		 cout << "slope_can_2:" << slope_can_2 << endl;
+		 cout << "slope_can_3:" << slope_can_3 << endl;
+		 if(g>=0)
+		slope = abs(slope_can_1 - g) <= abs(slope_can_2 - g) ? slope_can_1
+			: slope_can_2;
+		 cout << "slope:" << slope << endl;
+		return true;
 	}
-	imshow("轮廓图", mat_copy);
+	else {
+		slope = 0;
+	}
 
-	//TODO：在原图中把车牌区域显示出来,保存车牌图片文件
-	Mat mat_plate;
-	mat_plate = srcImage(rec_adapt);
-
-
-	//imwrite("plate_test_rotation.jpg", mat_plate);
-	//imshow("车牌", mat_plate);
-	//cout << "mat_plate rows is " << mat_plate.rows << endl;
-	//cout << "mat_plate cols is " << mat_plate.cols << endl;
-	waitKey(0);
+	return false;
 }
 
 
+void Affine(const Mat& in, Mat& out, const double slope)
+{
+
+	Point2f dstTri[3];
+	Point2f plTri[3];
+
+	float height = (float)in.rows;
+	float width = (float)in.cols;
+	float xiff = (float)abs(slope) * height;
+
+	if (slope > 0) {
+
+		// right, new position is xiff/2
+
+		plTri[0] = Point2f(0, 0);
+		plTri[1] = Point2f(width - xiff - 1, 0);
+		plTri[2] = Point2f(0 + xiff, height - 1);
+
+		dstTri[0] = Point2f(xiff / 2, 0);
+		dstTri[1] = Point2f(width - 1 - xiff / 2, 0);
+		dstTri[2] = Point2f(xiff / 2, height - 1);
+	}
+	else {
+
+		// left, new position is -xiff/2
+
+		plTri[0] = Point2f(0 + xiff, 0);
+		plTri[1] = Point2f(width - 1, 0);
+		plTri[2] = Point2f(0, height - 1);
+
+		dstTri[0] = Point2f(xiff / 2, 0);
+		dstTri[1] = Point2f(width - 1 - xiff + xiff / 2, 0);
+		dstTri[2] = Point2f(xiff / 2, height - 1);
+	}
+
+	Mat warp_mat = getAffineTransform(plTri, dstTri);
+
+	Mat affine_mat;
+	affine_mat.create((int)height, (int)width, TYPE);
+
+	if (in.rows > HEIGHT || in.cols > WIDTH)
+
+		warpAffine(in, affine_mat, warp_mat, affine_mat.size(),
+			CV_INTER_AREA);
+	else
+		warpAffine(in, affine_mat, warp_mat, affine_mat.size(), CV_INTER_CUBIC);
+
+	out = affine_mat;
+	imshow("Affine Pic", affine_mat);
+}
 
 
 /* 根据一幅图像与颜色模板获取对应的二值图
@@ -296,37 +260,13 @@ Mat colorMatch(const Mat& src, Mat& match, const Color r, const bool adaptive_mi
 }
 
 
-void fillBlank(const RotatedRect& roi_rect, const Mat& src, Rect_<float>& safeBoundRect)
-{
-	Rect_<float> boudRect = roi_rect.boundingRect();
-
-	// boudRect的左上的x和y有可能小于0
-	float tl_x = boudRect.x > 0 ? boudRect.x : 0;
-	float tl_y = boudRect.y > 0 ? boudRect.y : 0;
-	// boudRect的右下的x和y有可能大于src的范围
-	float br_x = boudRect.x + boudRect.width < src.cols ?
-		boudRect.x + boudRect.width - 1 : src.cols - 1;
-	float br_y = boudRect.y + boudRect.height < src.rows ?
-		boudRect.y + boudRect.height - 1 : src.rows - 1;
-
-	float roi_width = br_x - tl_x;
-	float roi_height = br_y - tl_y;
-
-	if (roi_width <= 0 || roi_height <= 0)
-		cout << "Can not fill the Blank" << endl;
-
-	// 新建一个mat，确保地址不越界，以防mat定位roi时抛异常
-	safeBoundRect = Rect_<float>(tl_x, tl_y, roi_width, roi_height);
-	cout << "Success fill the Blank" << endl;
-}
-
-void ProcessGreyPic(Mat& match_grey,Mat& mat_copy)
+void ProcessGreyPic(Mat& match_grey,Mat& mat_copy,double roi_angle)
 {
 	Mat src_threshold;
 	threshold(match_grey, src_threshold, 0, 255,
 		CV_THRESH_OTSU + CV_THRESH_BINARY);
 
-	Mat element = getStructuringElement(MORPH_RECT, Size(color_morphW, color_morphH));
+	Mat element = getStructuringElement(MORPH_RECT, Size(17, 3));
 	morphologyEx(src_threshold, src_threshold, MORPH_CLOSE, element);
 	imshow("小图闭操作结果", src_threshold);
 
@@ -338,6 +278,7 @@ void ProcessGreyPic(Mat& match_grey,Mat& mat_copy)
 		CV_RETR_EXTERNAL,
 		CV_CHAIN_APPROX_NONE);  // all pixels of each contours
 
+	RotatedRect rotated_rec;
 	Rect rec_adapt;//矩形区域
 	for (size_t i = 0; i < contours.size(); i++)
 	{
@@ -346,7 +287,7 @@ void ProcessGreyPic(Mat& match_grey,Mat& mat_copy)
 		if (boundingRect(contours[i]).height > 10 && boundingRect(contours[i]).width > 80 && true_pix_rate > 0.5)
 		{
 			rec_adapt = boundingRect(contours[i]);
-			
+			rotated_rec = minAreaRect(contours[i]);
 			//drawContours(mat_copy, contours, static_cast<int>(i), Scalar(0, 0, 255), 1);
 			//drawContours(src_threshold, contours, static_cast<int>(i), Scalar(200, 200, 0), 2);
 		}
@@ -355,6 +296,21 @@ void ProcessGreyPic(Mat& match_grey,Mat& mat_copy)
 	Mat mat_plate, dstImage;
 	mat_plate = mat_copy(rec_adapt);
 	imshow("车牌", mat_plate);
+
+	double roi_angle_1 = rotated_rec.angle;
+	cout << "Second ROI angle is : " << roi_angle_1 << endl;
+
+	/*double roi_slope = 0;
+
+	if (CacuSlope(src_threshold, roi_angle, roi_slope))
+	{
+		cout << "Have Done CacuSlope." << endl;
+	}*/
+	Mat mat_affine;
+	
+	Affine(mat_plate, mat_affine, AFFINE);
+
+
 }
 
 
@@ -442,8 +398,9 @@ int ColorPlateLocate()
 	//imwrite("car1_plate.jpg", mat_plate);
 
 	double angle_rec = rotated_rec.angle;
-	cout << "RotatedRect angle is : " << angle_rec << endl;
+	cout << "First ROI angle is : " << angle_rec << endl;
 
+	//旋转
 	Point2f center(mat_plate.cols / 2, mat_plate.rows / 2);
 
 	Mat rot_mat = getRotationMatrix2D(center, angle_rec, 1.0);
@@ -465,7 +422,9 @@ int ColorPlateLocate()
 
 	imshow("samll_mat_grey", small_mat_grey);
 
-	ProcessGreyPic(small_mat_grey, dstImage);
+	ProcessGreyPic(small_mat_grey, dstImage, angle_rec);
+
+
 
 	waitKey(0);
 }
@@ -473,24 +432,6 @@ int ColorPlateLocate()
 
 int main(int argc, char** argv)
 {
-	int choice;
-	cout << "Input Your choice:" << endl;
-	cout << "1.Run SobelPlateLocate." << endl;
-	cout << "2.Run ColorPlateLocate." << endl;
-	cin >> choice;
-	switch (choice)
-	{
-	case 1:
-		SobelPlateLocate("plate_judge.jpg");
-		break;
-	case 2:
-		ColorPlateLocate();
-		break;
-	default:
-		cout << "Input error." << endl;
-		break;
-	}
-	
-	
+	ColorPlateLocate();
 	return 0;
 }

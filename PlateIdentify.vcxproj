@@ -157,7 +157,9 @@
     <ClCompile Include="PlateIdentify_main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Character_segmentation.h" />
     <ClInclude Include="plate_locate.h" />
+    <ClInclude Include="Sobel.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

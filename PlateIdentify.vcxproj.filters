@@ -23,5 +23,11 @@
     <ClInclude Include="plate_locate.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Sobel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Character_segmentation.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
