@@ -14,6 +14,8 @@ The main configuration is as follows:
 * ColorPlateLocate
 * Tilt correction
 
+## Sample
+![22233.png](https://i.loli.net/2019/10/22/2HDmXwW8aL9F6yc.png)
 
 ## Unfinished work
 * Character segmentation
