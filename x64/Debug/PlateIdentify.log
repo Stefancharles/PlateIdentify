@@ -1,15 +1,15 @@
 ﻿  PlateIdentify_main.cpp
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(217,12): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(407,52): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(407,52): warning C4244:         with
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(407,52): warning C4244:         [
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(407,52): warning C4244:             _Tp=float
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(407,52): warning C4244:         ]
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(407,32): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(407,32): warning C4244:         with
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(407,32): warning C4244:         [
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(407,32): warning C4244:             _Tp=float
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(407,32): warning C4244:         ]
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(426): warning C4715: “ColorPlateLocate”: 不是所有的控件路径都返回值
-D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(150): warning C4715: “SobelPlateLocate”: 不是所有的控件路径都返回值
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(219,12): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(447,52): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(447,52): warning C4244:         with
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(447,52): warning C4244:         [
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(447,52): warning C4244:             _Tp=float
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(447,52): warning C4244:         ]
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(447,32): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(447,32): warning C4244:         with
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(447,32): warning C4244:         [
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(447,32): warning C4244:             _Tp=float
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(447,32): warning C4244:         ]
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(152): warning C4715: “SobelPlateLocate”: 不是所有的控件路径都返回值
+D:\OpenCV_Code\PlateIdentify\PlateIdentify_main.cpp(471): warning C4715: “ColorPlateLocate”: 不是所有的控件路径都返回值
   PlateIdentify.vcxproj -> D:\OpenCV_Code\PlateIdentify\x64\Debug\PlateIdentify.exe

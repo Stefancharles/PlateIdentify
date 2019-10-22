@@ -113,7 +113,7 @@ int SobelPlateLocate(String pic_name)
 	}
 
 	imshow("轮廓图", mat_copy);
-
+	cout <<"num"<< index;
 	Rect rec_adapt;//矩形区域
 	cout << "Total contours is :" << contours.size() << endl;
 	for (size_t i = 0; i < contours.size(); i++)
@@ -142,10 +142,12 @@ int SobelPlateLocate(String pic_name)
 	//TODO：在原图中把车牌区域显示出来,保存车牌图片文件
 	Mat mat_plate;
 	mat_plate = srcImage(rec_adapt);
-	imwrite("plate_test_rotation.jpg", mat_plate);
-	imshow("车牌", mat_plate);
-	cout << "mat_plate rows is " << mat_plate.rows << endl;
-	cout << "mat_plate cols is " << mat_plate.cols << endl;
+
+
+	//imwrite("plate_test_rotation.jpg", mat_plate);
+	//imshow("车牌", mat_plate);
+	//cout << "mat_plate rows is " << mat_plate.rows << endl;
+	//cout << "mat_plate cols is " << mat_plate.cols << endl;
 	waitKey(0);
 }
 
@@ -279,8 +281,8 @@ Mat colorMatch(const Mat& src, Mat& match, const Color r, const bool adaptive_mi
 		}
 	}
 
-	//cout << "avg_s:" << s_all / count << endl;
-	//cout << "avg_v:" << v_all / count << endl;
+	cout << "avg_s:" << s_all / count << endl;
+	cout << "avg_v:" << v_all / count << endl;
 
 	// 获取颜色匹配后的二值灰度图
 	Mat src_grey;
@@ -317,6 +319,44 @@ void fillBlank(const RotatedRect& roi_rect, const Mat& src, Rect_<float>& safeBo
 	safeBoundRect = Rect_<float>(tl_x, tl_y, roi_width, roi_height);
 	cout << "Success fill the Blank" << endl;
 }
+
+void ProcessGreyPic(Mat& match_grey,Mat& mat_copy)
+{
+	Mat src_threshold;
+	threshold(match_grey, src_threshold, 0, 255,
+		CV_THRESH_OTSU + CV_THRESH_BINARY);
+
+	Mat element = getStructuringElement(MORPH_RECT, Size(color_morphW, color_morphH));
+	morphologyEx(src_threshold, src_threshold, MORPH_CLOSE, element);
+	imshow("小图闭操作结果", src_threshold);
+
+	vector<vector<Point>> contours;
+	vector<Vec4i> hierarchy;
+	findContours(src_threshold,
+		contours,               // a vector of contours
+		hierarchy,
+		CV_RETR_EXTERNAL,
+		CV_CHAIN_APPROX_NONE);  // all pixels of each contours
+
+	Rect rec_adapt;//矩形区域
+	for (size_t i = 0; i < contours.size(); i++)
+	{
+		int true_pix_count = countNonZero(src_threshold(boundingRect(contours[i])));
+		double true_pix_rate = static_cast<double>(true_pix_count) / static_cast<double>(boundingRect(contours[i]).area());
+		if (boundingRect(contours[i]).height > 10 && boundingRect(contours[i]).width > 80 && true_pix_rate > 0.5)
+		{
+			rec_adapt = boundingRect(contours[i]);
+			
+			//drawContours(mat_copy, contours, static_cast<int>(i), Scalar(0, 0, 255), 1);
+			//drawContours(src_threshold, contours, static_cast<int>(i), Scalar(200, 200, 0), 2);
+		}
+	}
+
+	Mat mat_plate, dstImage;
+	mat_plate = mat_copy(rec_adapt);
+	imshow("车牌", mat_plate);
+}
+
 
 int ColorPlateLocate()
 {
@@ -398,11 +438,11 @@ int ColorPlateLocate()
 
 	Mat mat_plate, dstImage;
 	mat_plate = srcImage(rec_adapt);
-	imshow("车牌", mat_plate);
+	imshow("车牌大致区域", mat_plate);
 	//imwrite("car1_plate.jpg", mat_plate);
 
 	double angle_rec = rotated_rec.angle;
-	cout << "RotatedRect angle is : " << angle_rec;
+	cout << "RotatedRect angle is : " << angle_rec << endl;
 
 	Point2f center(mat_plate.cols / 2, mat_plate.rows / 2);
 
@@ -414,14 +454,19 @@ int ColorPlateLocate()
 
 	imwrite("car_rotation.jpg", dstImage);
 	
-	Rect_<float> safeBoundRect;
-	 
+	/*Rect_<float> safeBoundRect;
 	fillBlank(rotated_rec, dstImage, safeBoundRect);
+	Mat safeImage = dstImage(safeBoundRect);
+	imshow("safeImage", safeImage);*/
 
-	
+	Mat small_mat_grey;
 
+	colorMatch(dstImage, small_mat_grey, BLUE, false);
 
-	
+	imshow("samll_mat_grey", small_mat_grey);
+
+	ProcessGreyPic(small_mat_grey, dstImage);
+
 	waitKey(0);
 }
 
