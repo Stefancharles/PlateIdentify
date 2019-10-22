@@ -1,11 +1,12 @@
 ﻿#include"plate_locate.h"
 
 
-int SobelPlateLocate()
+
+int SobelPlateLocate(String pic_name)
 {
 	cout << "SobelPlateLocate,Start..." << endl;
 
-	Mat srcImage = imread("plate_judge.jpg");
+	Mat srcImage = imread(pic_name);
 
 	if (srcImage.data == NULL)
 	{
@@ -97,7 +98,7 @@ int SobelPlateLocate()
 		CV_CHAIN_APPROX_NONE);  // all pixels of each contours
 
 	//TODO:绘制取轮廓后的结果
-	/*
+	
 	int index = 0;
 	for (; index >= 0; index = hierarchy[index][0])
 	{
@@ -111,9 +112,10 @@ int SobelPlateLocate()
 			hierarchy);
 	}
 
-	imshow("轮廓图", mat_copy);*/
+	imshow("轮廓图", mat_copy);
 
 	Rect rec_adapt;//矩形区域
+	cout << "Total contours is :" << contours.size() << endl;
 	for (size_t i = 0; i < contours.size(); i++)
 	{
 		//----矩形区域非零像素占总的比例，防止有较大的空白区域干扰检测结果
@@ -129,16 +131,26 @@ int SobelPlateLocate()
 			drawContours(mat_copy, contours, static_cast<int>(i), Scalar(0, 0, 255), 1);
 			drawContours(mat_threshold, contours, static_cast<int>(i), Scalar(200, 200, 0), 2);
 		}
+		/*else
+		{
+			cout << "Can not BoundingRec." << endl;
+			
+		}*/
 	}
 	imshow("轮廓图", mat_copy);
 
 	//TODO：在原图中把车牌区域显示出来,保存车牌图片文件
 	Mat mat_plate;
 	mat_plate = srcImage(rec_adapt);
-	imwrite("plate_test.jpg", mat_plate);
+	imwrite("plate_test_rotation.jpg", mat_plate);
 	imshow("车牌", mat_plate);
+	cout << "mat_plate rows is " << mat_plate.rows << endl;
+	cout << "mat_plate cols is " << mat_plate.cols << endl;
 	waitKey(0);
 }
+
+
+
 
 /* 根据一幅图像与颜色模板获取对应的二值图
  * 输入RGB图像, 颜色模板（蓝色、黄色）
@@ -282,6 +294,30 @@ Mat colorMatch(const Mat& src, Mat& match, const Color r, const bool adaptive_mi
 }
 
 
+void fillBlank(const RotatedRect& roi_rect, const Mat& src, Rect_<float>& safeBoundRect)
+{
+	Rect_<float> boudRect = roi_rect.boundingRect();
+
+	// boudRect的左上的x和y有可能小于0
+	float tl_x = boudRect.x > 0 ? boudRect.x : 0;
+	float tl_y = boudRect.y > 0 ? boudRect.y : 0;
+	// boudRect的右下的x和y有可能大于src的范围
+	float br_x = boudRect.x + boudRect.width < src.cols ?
+		boudRect.x + boudRect.width - 1 : src.cols - 1;
+	float br_y = boudRect.y + boudRect.height < src.rows ?
+		boudRect.y + boudRect.height - 1 : src.rows - 1;
+
+	float roi_width = br_x - tl_x;
+	float roi_height = br_y - tl_y;
+
+	if (roi_width <= 0 || roi_height <= 0)
+		cout << "Can not fill the Blank" << endl;
+
+	// 新建一个mat，确保地址不越界，以防mat定位roi时抛异常
+	safeBoundRect = Rect_<float>(tl_x, tl_y, roi_width, roi_height);
+	cout << "Success fill the Blank" << endl;
+}
+
 int ColorPlateLocate()
 {
 	cout << "ColorPlateLocate,Start..." << endl;
@@ -340,7 +376,7 @@ int ColorPlateLocate()
 
 	imshow("轮廓图", mat_copy);
 
-
+	RotatedRect rotated_rec;
 	Rect rec_adapt;//矩形区域
 	for (size_t i = 0; i < contours.size(); i++)
 	{
@@ -354,18 +390,40 @@ int ColorPlateLocate()
 		if (boundingRect(contours[i]).height > 10 && boundingRect(contours[i]).width > 80 && true_pix_rate > 0.5)
 		{
 			rec_adapt = boundingRect(contours[i]);
+			rotated_rec = minAreaRect(contours[i]);
 			drawContours(mat_copy, contours, static_cast<int>(i), Scalar(0, 0, 255), 1);
-			drawContours(src_threshold, contours, static_cast<int>(i), Scalar(200, 200, 0), 2);
+			//drawContours(src_threshold, contours, static_cast<int>(i), Scalar(200, 200, 0), 2);
 		}
 	}
 
-	Mat mat_plate;
+	Mat mat_plate, dstImage;
 	mat_plate = srcImage(rec_adapt);
 	imshow("车牌", mat_plate);
-	imwrite("car1_plate.jpg", mat_plate);
+	//imwrite("car1_plate.jpg", mat_plate);
+
+	double angle_rec = rotated_rec.angle;
+	cout << "RotatedRect angle is : " << angle_rec;
+
+	Point2f center(mat_plate.cols / 2, mat_plate.rows / 2);
+
+	Mat rot_mat = getRotationMatrix2D(center, angle_rec, 1.0);
+
+	warpAffine(mat_plate, dstImage, rot_mat, Size(mat_plate.cols, mat_plate.rows), CV_INTER_CUBIC);
+
+	imshow("dstImage_warp", dstImage);
+
+	imwrite("car_rotation.jpg", dstImage);
+	
+	Rect_<float> safeBoundRect;
+	 
+	fillBlank(rotated_rec, dstImage, safeBoundRect);
+
+	
+
+
+	
 	waitKey(0);
 }
-
 
 
 int main(int argc, char** argv)
@@ -378,7 +436,7 @@ int main(int argc, char** argv)
 	switch (choice)
 	{
 	case 1:
-		SobelPlateLocate();
+		SobelPlateLocate("plate_judge.jpg");
 		break;
 	case 2:
 		ColorPlateLocate();
