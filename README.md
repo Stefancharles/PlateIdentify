@@ -13,11 +13,15 @@ The main configuration is as follows:
 * SobelPlateLocate
 * ColorPlateLocate
 * Tilt correction
+* Character segmentation
 
 ## Sample
 ![22233.png](https://i.loli.net/2019/10/22/2HDmXwW8aL9F6yc.png)
 
+![20191106111120.png](https://i.loli.net/2019/11/06/9Uhzp7AI6nCgwKB.png)
+
+
 ## Unfinished work
-* Character segmentation
+
 * Character recognition
 * SVM
