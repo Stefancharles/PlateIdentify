@@ -5,7 +5,7 @@ This is based on the open source project EasyPR. Mainly in the process of person
 
 The main configuration is as follows:
 * OpenCV Version:4.1.1
-* VS Version: 2019 Preview
+* VS Version: 2019
 * System: Win10 1903
 * JetBrains Clion 193.3519.24
 
