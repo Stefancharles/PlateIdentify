@@ -5,6 +5,9 @@
 #include <opencv2/imgproc/types_c.h>
 #include "iostream"
 
+
+
+
 using namespace cv;
 using namespace std;
 
@@ -36,6 +39,7 @@ static const int WIDTH = 136;
 static const int HEIGHT = 36;
 
 
+
 class CPlate {
 public:
 	CPlate() {
@@ -51,7 +55,6 @@ public:
 		m_score = other.m_score;
 		m_platePos = other.m_platePos;
 		m_plateStr = other.m_plateStr;
-		//m_locateType = other.m_locateType;
 		m_plateColor = other.m_plateColor;
 		m_line = other.m_line;
 		m_leftPoint = other.m_leftPoint;
@@ -60,9 +63,6 @@ public:
 		m_maxCharRect = other.m_maxCharRect;
 		m_scale = other.m_scale;
 		m_distVec = other.m_distVec;
-
-		//m_mserCharVec = other.m_mserCharVec;
-		//m_reutCharVec = other.m_reutCharVec;
 		m_ostuLevel = other.m_ostuLevel;
 	}
 
@@ -74,7 +74,6 @@ public:
 			m_score = other.m_score;
 			m_platePos = other.m_platePos;
 			m_plateStr = other.m_plateStr;
-			//m_locateType = other.m_locateType;
 			m_plateColor = other.m_plateColor;
 			m_line = other.m_line;
 			m_leftPoint = other.m_leftPoint;
@@ -84,8 +83,6 @@ public:
 
 			m_distVec = other.m_distVec;
 
-			//m_mserCharVec = other.m_mserCharVec;
-			//m_reutCharVec = other.m_reutCharVec;
 			m_ostuLevel = other.m_ostuLevel;
 		}
 		return *this;
@@ -136,14 +133,6 @@ public:
 
 	inline void setOstuLevel(double param) { m_ostuLevel = param; }
 	inline double getOstuLevel() const { return m_ostuLevel; }
-
-	/*inline void setMserCharacter(const std::vector<CCharacter>& param) { m_mserCharVec = param; }
-	inline void addMserCharacter(CCharacter param) { m_mserCharVec.push_back(param); }
-	inline std::vector<CCharacter> getCopyOfMserCharacters() { return m_mserCharVec; }*/
-
-	//inline void setReutCharacter(const std::vector<CCharacter>& param) { m_reutCharVec = param; }
-	//inline void addReutCharacter(CCharacter param) { m_reutCharVec.push_back(param); }
-	//inline std::vector<CCharacter> getCopyOfReutCharacters() { return m_reutCharVec; }
 
 	bool operator < (const CPlate& plate) const { return (m_score < plate.m_score); }
 	bool operator < (const CPlate& plate) { return (m_score < plate.m_score); }

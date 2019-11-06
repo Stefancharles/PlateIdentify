@@ -297,30 +297,27 @@ void ProcessGreyPic(Mat& match_grey,Mat& mat_copy,double roi_angle)
 
 	Mat mat_plate, dstImage;
 	mat_plate = mat_copy(rec_adapt);
-	//imshow("车牌", mat_plate);
+	imshow("车牌", mat_plate);
+	imwrite("charpic.jpg", mat_plate);
+	//double roi_angle_1 = rotated_rec.angle;
+	//cout << "Second ROI angle is : " << roi_angle_1 << endl;
 
-	double roi_angle_1 = rotated_rec.angle;
-	cout << "Second ROI angle is : " << roi_angle_1 << endl;
-
-	Mat mat_affine;
-	
-	Affine(mat_plate, mat_affine, AFFINE);
+	//Mat mat_affine;
+	//Affine(mat_plate, mat_affine, AFFINE);
 	//矫正后的车牌区域
-	imwrite("charpic.jpg", mat_affine);
+	//imwrite("charpic.jpg", mat_affine);
 	//字符分割
 	//vector<Mat> DividedChar;
 	Pretreatment();
 	//charDivision(mat_affine, DividedChar);
+	return;
 }
 
 
 int ColorPlateLocate()
 {
 	cout << "ColorPlateLocate,Start..." << endl;
-
-	Mat srcImage = imread("car1.jpg");
-	//srcImage.resize(960);
-
+	Mat srcImage = imread("plate_judge.jpg");
 	Mat mat_copy;
 	mat_copy = srcImage.clone();
 	if (srcImage.data == NULL)
@@ -402,20 +399,11 @@ int ColorPlateLocate()
 
 	//旋转
 	Point2f center(mat_plate.cols / 2, mat_plate.rows / 2);
-
 	Mat rot_mat = getRotationMatrix2D(center, angle_rec, 1.0);
-
 	warpAffine(mat_plate, dstImage, rot_mat, Size(mat_plate.cols, mat_plate.rows), CV_INTER_CUBIC);
-
 	//imshow("dstImage_warp", dstImage);
 
-	imwrite("car_rotation.jpg", dstImage);
-	
-	/*Rect_<float> safeBoundRect;
-	fillBlank(rotated_rec, dstImage, safeBoundRect);
-	Mat safeImage = dstImage(safeBoundRect);
-	imshow("safeImage", safeImage);*/
-
+	//imwrite("car_rotation.jpg", dstImage);
 	Mat small_mat_grey;
 
 	colorMatch(dstImage, small_mat_grey, BLUE, false);
@@ -424,15 +412,18 @@ int ColorPlateLocate()
 
 	ProcessGreyPic(small_mat_grey, dstImage, angle_rec);
 
-
-
-	waitKey(0);
+	return 1;
 }
 
 
 int main(int argc, char** argv)
 {
+	double start = static_cast<double>(getTickCount());
 	ColorPlateLocate();
-	
+
+	double time = ((double)getTickCount() - start) / getTickFrequency();
+	cout << "所花费时间为:" << time << "s" << endl;
+
+	waitKey(0);
 	return 0;
 }
