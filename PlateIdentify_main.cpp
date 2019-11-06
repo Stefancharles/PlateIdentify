@@ -1,4 +1,5 @@
 ﻿#include"plate_locate.h"
+#include "Character_segmentation.h"
 
 bool CacuSlope(const Mat& in, const double angle, double& slope)
 {
@@ -114,7 +115,8 @@ void Affine(const Mat& in, Mat& out, const double slope)
 		warpAffine(in, affine_mat, warp_mat, affine_mat.size(), CV_INTER_CUBIC);
 
 	out = affine_mat;
-	imshow("Affine Pic", affine_mat);
+	//imshow("Affine Pic", affine_mat);
+	
 }
 
 
@@ -268,7 +270,7 @@ void ProcessGreyPic(Mat& match_grey,Mat& mat_copy,double roi_angle)
 
 	Mat element = getStructuringElement(MORPH_RECT, Size(17, 3));
 	morphologyEx(src_threshold, src_threshold, MORPH_CLOSE, element);
-	imshow("小图闭操作结果", src_threshold);
+	//imshow("小图闭操作结果", src_threshold);
 
 	vector<vector<Point>> contours;
 	vector<Vec4i> hierarchy;
@@ -295,22 +297,20 @@ void ProcessGreyPic(Mat& match_grey,Mat& mat_copy,double roi_angle)
 
 	Mat mat_plate, dstImage;
 	mat_plate = mat_copy(rec_adapt);
-	imshow("车牌", mat_plate);
+	//imshow("车牌", mat_plate);
 
 	double roi_angle_1 = rotated_rec.angle;
 	cout << "Second ROI angle is : " << roi_angle_1 << endl;
 
-	/*double roi_slope = 0;
-
-	if (CacuSlope(src_threshold, roi_angle, roi_slope))
-	{
-		cout << "Have Done CacuSlope." << endl;
-	}*/
 	Mat mat_affine;
 	
 	Affine(mat_plate, mat_affine, AFFINE);
-
-
+	//矫正后的车牌区域
+	imwrite("charpic.jpg", mat_affine);
+	//字符分割
+	//vector<Mat> DividedChar;
+	Pretreatment();
+	//charDivision(mat_affine, DividedChar);
 }
 
 
@@ -332,13 +332,13 @@ int ColorPlateLocate()
 	{
 		cout << "input_image rows is " << srcImage.rows << endl;
 		cout << "input_image cols is " << srcImage.cols << endl;
-		imshow("Source Image", srcImage);
+		//imshow("Source Image", srcImage);
 	}
 
 	Mat match_grey;
 
 	colorMatch(srcImage, match_grey, BLUE, false);
-	imshow("mat_gray", match_grey);
+	//imshow("mat_gray", match_grey);
 
 	Mat src_threshold;
 	threshold(match_grey, src_threshold, 0, 255,
@@ -346,7 +346,7 @@ int ColorPlateLocate()
 
 	Mat element = getStructuringElement(MORPH_RECT, Size(color_morphW, color_morphH));
 	morphologyEx(src_threshold, src_threshold, MORPH_CLOSE, element);
-	imshow("闭操作结果", src_threshold);
+	//imshow("闭操作结果", src_threshold);
 
 	vector<vector<Point>> contours;
 	vector<Vec4i> hierarchy;
@@ -355,7 +355,7 @@ int ColorPlateLocate()
 		hierarchy,
 		CV_RETR_EXTERNAL,
 		CV_CHAIN_APPROX_NONE);  // all pixels of each contours
-
+	/*
 	int index = 0;
 
 	for (; index >= 0; index = hierarchy[index][0])
@@ -368,9 +368,9 @@ int ColorPlateLocate()
 			2,
 			8,
 			hierarchy);
-	}
+	}*/
 
-	imshow("轮廓图", mat_copy);
+	//imshow("轮廓图", mat_copy);
 
 	RotatedRect rotated_rec;
 	Rect rec_adapt;//矩形区域
@@ -394,7 +394,7 @@ int ColorPlateLocate()
 
 	Mat mat_plate, dstImage;
 	mat_plate = srcImage(rec_adapt);
-	imshow("车牌大致区域", mat_plate);
+	//imshow("车牌大致区域", mat_plate);
 	//imwrite("car1_plate.jpg", mat_plate);
 
 	double angle_rec = rotated_rec.angle;
@@ -407,7 +407,7 @@ int ColorPlateLocate()
 
 	warpAffine(mat_plate, dstImage, rot_mat, Size(mat_plate.cols, mat_plate.rows), CV_INTER_CUBIC);
 
-	imshow("dstImage_warp", dstImage);
+	//imshow("dstImage_warp", dstImage);
 
 	imwrite("car_rotation.jpg", dstImage);
 	
@@ -420,7 +420,7 @@ int ColorPlateLocate()
 
 	colorMatch(dstImage, small_mat_grey, BLUE, false);
 
-	imshow("samll_mat_grey", small_mat_grey);
+	//imshow("samll_mat_grey", small_mat_grey);
 
 	ProcessGreyPic(small_mat_grey, dstImage, angle_rec);
 
@@ -433,5 +433,6 @@ int ColorPlateLocate()
 int main(int argc, char** argv)
 {
 	ColorPlateLocate();
+	
 	return 0;
 }
