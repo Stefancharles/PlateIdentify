@@ -3,19 +3,28 @@
 
 #include "plate_locate.h"
 
-int Subtraction(Mat& a, Mat& b)
+int pixelSubtraction(Mat& a, Mat& b)
 {
-	char channelValue1, channelValue2;
+	int cols, rows;
+	if (a.cols >= b.cols)
+		cols = b.cols;
+	else
+		cols = a.cols;
+	if (a.rows >= b.rows)
+		rows = b.rows;
+	else
+		rows = a.rows;
+	char channel_value_a, channel_value_b;
 	int sum = 0;
-	for (int i = 0; i < a.rows; i++)
+	for (int i = 0; i < rows; i++)
 	{
-		char* img1Ptr = a.ptr<char>(i);
-		char* img2Ptr = b.ptr<char>(i);
-		for (int j = 0; j < a.cols; j++)
+		char* a_row_ptr = a.ptr<char>(i);
+		char* b_row_ptr = b.ptr<char>(i);
+		for (int j = 0; j < cols; j++)
 		{
-			channelValue1 = img1Ptr[j];
-			channelValue2 = img2Ptr[j];
-			sum += abs(channelValue1 - channelValue2);
+			channel_value_a = a_row_ptr[j];
+			channel_value_b = b_row_ptr[j];
+			sum += abs(channel_value_a - channel_value_b);
 		}
 	}
 	return sum;
@@ -23,7 +32,7 @@ int Subtraction(Mat& a, Mat& b)
 
 
 //按照顺序读取图片
-int ReadPic(Mat& in)
+int readPic(Mat& in)
 {
 	int score = 0;
 	string pattern_jpg = "D:/OpenCV_Code/PlateIdentify/template/*.jpg";
@@ -44,56 +53,82 @@ int ReadPic(Mat& in)
 		Mat templatePic = imread(filename);
 		if (templatePic.data == NULL)
 		{
-			cout << "can't open this image..." << endl;
-			cout << filename << endl;
+			//cout << "can't open this image..." << endl;
+			//cout << filename << endl;
 		}
 		else
 		{
-			cout << "Success open this image..." << endl;
-			cout << filename << endl;
-			score = Subtraction(in, templatePic);
+			//cout << "Success open this image..." << endl;
+			//cout << filename << endl;
+			score = pixelSubtraction(in, templatePic);
 			return score;
 		}
 	}
 }
 
 
-int PixelSubtraction(vector<Mat>& in) 
+int charSubtraction(vector<Mat>& in)
 {
-	vector<Mat> templateImg;
-	int result = 0, index = 0, lowest = 0;
-	for (size_t i = 0; i < 12; i++)
+	vector<vector<Mat>> template_pics;
+	for (int i = 0; i < 65; i++)
 	{
-		string str = "";
-		str += to_string(i);
-		str += ".jpg";
-		templateImg.push_back(imread(str));
+		vector<Mat> a;
+		template_pics.push_back(a);
 	}
-
+	String base_pic_path = "D:\\OpenCV_Code\\EasyPR\\resources\\train\\ann\\";
+	String pic_path;
+	String tail = "\\*.jpg";
+	vector<String> pic_list;
+	for (int i = 0; i < 65; i++)
+	{
+		pic_path = base_pic_path + kChars[i] + tail;
+		glob(pic_path, pic_list);
+		if (pic_list.size() == 0)
+		{
+			cout << "No template image files[jpg]!" << endl;
+			return -1;
+		}
+		for (size_t j = 0; j < pic_list.size(); j++)
+		{
+			template_pics[i].push_back(imread(pic_list[j]));
+			cvtColor(template_pics[i][j], template_pics[i][j], COLOR_BGR2GRAY);
+			threshold(template_pics[i][j], template_pics[i][j], 0, 255, CV_THRESH_OTSU + CV_THRESH_BINARY);
+		}
+	}
+	double result = 0, lowest = 0;
+	int index;
+	cout << "----------------- " << endl;
+	cout << "The recognized license plate is： " ;
 	for (int i = 0; i < in.size(); i++)
 	{
 		index = 0;
-		for (int j = 0; j < templateImg.size() - 1; j++)
+		for (int k = 0; k < template_pics.size(); k++)
 		{
-			result = Subtraction(in[i], templateImg[j]); //获取第i个车牌号码和第j个模板的比较结果
-			cout << "result :" << result << endl;
-			if (j == 0)
-				lowest = result;
-			if (lowest > Subtraction(in[i], templateImg[j + 1])) //获取第i个车牌号码和第j+1个模板的比较结果，如果j+1更小，则记录下模板号码
+			for (int j = 0; j < template_pics[k].size(); j++)
 			{
-				lowest = Subtraction(in[i], templateImg[j + 1]);
-				cout << "lowest :" << lowest << endl;
-				index = j + 1;
+				result += pixelSubtraction(in[i], template_pics[k][j]);
 			}
+			result = result / template_pics[k].size(); 
+			if (k == 0)
+				lowest = result;
+			if (lowest > result) 
+			{
+				lowest = result;
+				index = k;
+			}
+			result = 0;
 		}
-		cout << "第" << i << "个车牌和第" << index+1 << "个模板重合率高" << endl;
+		cout << kChars[index];
+		
 	}
+	cout << endl;
+	cout << "----------------- " << endl;
 	return true;
 }
 
 
 //垂直投影，分割字符
-void VerticalProjection(Mat& binImg, Mat& srcImg)
+void verticalProjection(Mat& binImg, Mat& srcImg)
 {
 	long width = binImg.cols;
 	long height = binImg.rows;
@@ -155,8 +190,10 @@ void VerticalProjection(Mat& binImg, Mat& srcImg)
 			endIndex = i;
 			inblock = false;
 			cout << "endIndex:" << endIndex << endl;
+			cout << "Distance:" << endIndex - startIndex << endl;
 			cout << endl;
-			if (endIndex - startIndex <= 3)
+			//判断“.”
+			if (endIndex - startIndex <= DOTLENGTH)
 			{
 				isDot = true;
 			}
@@ -166,41 +203,44 @@ void VerticalProjection(Mat& binImg, Mat& srcImg)
 			}
 			if (!isDot)
 			{
-				Mat roiImg = binImg(Range(0, srcImg.rows), Range(startIndex-2, endIndex + 2));
+				Mat roiImg = binImg(Range(0, srcImg.rows), Range(startIndex-2, endIndex+2));
 				Mat resizeRoiImg = roiImg;
 				//调整图片尺寸为20*20
 				resize(roiImg, resizeRoiImg, Size(20, 20));
 				roiList.push_back(resizeRoiImg);
+				//roiList.push_back(roiImg);
 			}
 			
 		}
 	}
+
 	//保存字符到文件
 	for (int i = 0; i <roiList.size(); i++)
 	{
 		string filename = "";
 		char num = i;
-		filename += to_string(i);
-		String jpg = "bin.jpg";
+		filename += to_string(i+1);
+		String jpg = ".jpg";
 		filename = filename + jpg;
 		imwrite(filename, roiList[i]);
 		imshow(filename, roiList[i]);
 	}
 
-	PixelSubtraction(roiList);
+	charSubtraction(roiList);
+
 
 	return;
 }
 
 
-void Pretreatment()
+void preTreatment()
 {
 	cout << "Character_segmentation,Start..." << endl;
 	
-	Mat src = imread("plate_test.jpg");
-	Mat srcImage = src;
+	Mat srcImage = imread("su.jpg");
+	//Mat srcImage = src;
 	//将车牌resize为宽度136，高度36的矩形
-	resize(src, srcImage, Size(136,36));
+	//resize(src, srcImage, Size(136,36));
 
 	if (srcImage.data == NULL)
 	{
@@ -210,6 +250,7 @@ void Pretreatment()
 	{
 		cout << "resize_image rows is " << srcImage.rows << endl;
 		cout << "resize_image cols is " << srcImage.cols << endl;
+		cout << endl;
 		//imwrite("Resize Image.jpg", srcImage);
 	}
 	Mat input_grey;
@@ -222,7 +263,7 @@ void Pretreatment()
 
 	imshow("二值化", src_threshold);
 
-	VerticalProjection(src_threshold, srcImage);
+	verticalProjection(src_threshold, srcImage);
 
 	
 

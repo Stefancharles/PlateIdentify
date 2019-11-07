@@ -1,7 +1,8 @@
 ﻿#include"plate_locate.h"
 #include "Character_segmentation.h"
+#include <opencv2\core\ocl.hpp>
 
-bool CacuSlope(const Mat& in, const double angle, double& slope)
+bool cacuSlope(const Mat& in, const double angle, double& slope)
 {
 	int nRows = in.rows;
 	int nCols = in.cols;
@@ -67,7 +68,7 @@ bool CacuSlope(const Mat& in, const double angle, double& slope)
 }
 
 
-void Affine(const Mat& in, Mat& out, const double slope)
+void doAffine(const Mat& in, Mat& out, const double slope)
 {
 
 	Point2f dstTri[3];
@@ -262,7 +263,7 @@ Mat colorMatch(const Mat& src, Mat& match, const Color r, const bool adaptive_mi
 }
 
 
-void ProcessGreyPic(Mat& match_grey,Mat& mat_copy,double roi_angle)
+void processGreyPic(Mat& match_grey,Mat& mat_copy,double roi_angle)
 {
 	Mat src_threshold;
 	threshold(match_grey, src_threshold, 0, 255,
@@ -297,24 +298,25 @@ void ProcessGreyPic(Mat& match_grey,Mat& mat_copy,double roi_angle)
 
 	Mat mat_plate, dstImage;
 	mat_plate = mat_copy(rec_adapt);
-	imshow("车牌", mat_plate);
+	//imshow("车牌", mat_plate);
 	imwrite("charpic.jpg", mat_plate);
 	//double roi_angle_1 = rotated_rec.angle;
 	//cout << "Second ROI angle is : " << roi_angle_1 << endl;
 
-	//Mat mat_affine;
-	//Affine(mat_plate, mat_affine, AFFINE);
+	Mat mat_affine;
+	doAffine(mat_plate, mat_affine, AFFINE);
 	//矫正后的车牌区域
+	imshow("矫正后的车牌区域", mat_affine);
 	//imwrite("charpic.jpg", mat_affine);
 	//字符分割
 	//vector<Mat> DividedChar;
-	Pretreatment();
-	//charDivision(mat_affine, DividedChar);
+	preTreatment();
+	
 	return;
 }
 
 
-int ColorPlateLocate()
+int colorPlateLocate()
 {
 	cout << "ColorPlateLocate,Start..." << endl;
 	Mat srcImage = imread("plate_judge.jpg");
@@ -391,7 +393,7 @@ int ColorPlateLocate()
 
 	Mat mat_plate, dstImage;
 	mat_plate = srcImage(rec_adapt);
-	//imshow("车牌大致区域", mat_plate);
+	imshow("车牌大致区域", mat_plate);
 	//imwrite("car1_plate.jpg", mat_plate);
 
 	double angle_rec = rotated_rec.angle;
@@ -410,7 +412,7 @@ int ColorPlateLocate()
 
 	//imshow("samll_mat_grey", small_mat_grey);
 
-	ProcessGreyPic(small_mat_grey, dstImage, angle_rec);
+	processGreyPic(small_mat_grey, dstImage, angle_rec);
 
 	return 1;
 }
@@ -418,11 +420,13 @@ int ColorPlateLocate()
 
 int main(int argc, char** argv)
 {
+	cv::ocl::setUseOpenCL(false);
 	double start = static_cast<double>(getTickCount());
-	ColorPlateLocate();
+
+	colorPlateLocate();
 
 	double time = ((double)getTickCount() - start) / getTickFrequency();
-	cout << "所花费时间为:" << time << "s" << endl;
+	cout << "Time consuming :" << time << "s" << endl;
 
 	waitKey(0);
 	return 0;
