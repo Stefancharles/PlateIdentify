@@ -20,8 +20,12 @@ The main configuration is as follows:
 
 ![20191106111120.png](https://i.loli.net/2019/11/06/9Uhzp7AI6nCgwKB.png)
 
+![1477.png](https://i.loli.net/2019/11/07/aZWbKoPwHyL8DGA.png)
+
+The Recognition accuracy is poor.
 
 ## Unfinished work
 
 * Character recognition
+* Recognition accuracy
 * SVM
